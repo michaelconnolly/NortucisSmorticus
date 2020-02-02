@@ -1,4 +1,4 @@
-// Import external libraries
+    // Import external libraries
 #include <Adafruit_ssd1306syp.h>
 #include "SoftwareSerial.h"
 #include "WString.h"
@@ -8,7 +8,7 @@
 #define PIN_MOTOR_B_ENABLE 6
 #define PIN_MOTOR_A_INPUT1 7
 #define PIN_MOTOR_A_INPUT2 8
-#define PIN_MOTOR_B_INPUT1 9
+#define PIN_MOTOR_B_INPUT1 11
 #define PIN_MOTOR_B_INPUT2 4
 #define PIN_LED            10
 #define PIN_I2C_SDA        A4
@@ -26,10 +26,12 @@ enum BluetoothState {
   BLUETOOTH_ABANDONDED
 };
 
+
 // Global Variables: Run state
 boolean dead = false;
 bool autoShutOff = false;
 unsigned long startTime = 0; 
+const char build_timestamp[] =  __DATE__ " " __TIME__;
 
 // Global Variables: the OLED Display, connected via I2C interface
 Adafruit_ssd1306syp display(PIN_I2C_SDA, PIN_I2C_SCL);
@@ -55,17 +57,38 @@ void displayStatus(String line1, String line2, String line3, String line4) {
   display.setTextSize(1);
   display.setTextColor(WHITE);
 
-  display.setCursor(0,2);
+  display.setCursor(0,0);
   display.println(line1);
+
+  // Fun little animation to prove that we are not locked up.
+  const int circleRadius = 5;
+  const int circleOffset = 0;
+  const int maxRight = (SCREEN_WIDTH - 1) - circleRadius;
+  const int maxLeft = 82;
+  int numFrames = maxRight - maxLeft;
+  int numFramesDouble = numFrames * 2;
+  int timePerFrame = 3000 / numFramesDouble;
+  int currentFrame = (millis() / timePerFrame) % numFramesDouble;
+  int circleCenterX = (currentFrame < numFrames) ? (maxRight - currentFrame) : (maxLeft + (currentFrame - numFrames));
+  display.drawCircle(circleCenterX, circleRadius + circleOffset, circleRadius, WHITE);
   
-  display.setCursor(0,18);
+  display.setCursor(0,20);
   display.println(line2);
     
-  display.setCursor(0,34);
+  display.setCursor(0,30);
   display.println(line3);
 
-  display.setCursor(0,48);
+  display.setCursor(0,40);
   display.println(line4);
+
+  // Print the timestamp of when we built this code.
+  const int stampHeight = 10;
+  int beginStamp = 55;
+  display.drawLine(0, beginStamp, SCREEN_WIDTH - 1, beginStamp, WHITE); // top line
+  display.drawLine(0, beginStamp, 0, beginStamp + stampHeight, WHITE); // left line
+  display.drawLine(SCREEN_WIDTH - 1, beginStamp, SCREEN_WIDTH - 1, beginStamp + stampHeight, WHITE); // right line
+  display.setCursor(4, beginStamp + 2);
+  display.println(build_timestamp);
 
   display.update();
 }
