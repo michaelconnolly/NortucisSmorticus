@@ -1,5 +1,6 @@
-    // Import external libraries
+// Import external libraries
 #include <Adafruit_ssd1306syp.h>
+#include <IRremote.h>
 #include "SoftwareSerial.h"
 #include "WString.h"
 
@@ -13,11 +14,13 @@
 #define PIN_LED            10
 #define PIN_I2C_SDA        A4
 #define PIN_I2C_SCL        A5
+#define PIN_IR_RECEIVER    12
 
 // More Constants
 #define AUTO_SHUTOFF_TIME 30000
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define COMMAND_NONE '?'
 
 // The various states of our bluetooth connection.
 enum BluetoothState {
@@ -25,7 +28,6 @@ enum BluetoothState {
   BLUETOOTH_CONNECTED,
   BLUETOOTH_ABANDONDED
 };
-
 
 // Global Variables: Run state
 boolean dead = false;
@@ -46,6 +48,10 @@ char command = 'S';
 char prevCommand = 'A';
 unsigned long timeLastCommand = 0;  //Stores the time when the last command was received from the phone
 
+// Global Variables: Infrared
+IRrecv ir_receiver(PIN_IR_RECEIVER);
+char last_ir_command = COMMAND_NONE;
+
 /*** DISPLAY ***/
 
 
@@ -53,10 +59,10 @@ unsigned long timeLastCommand = 0;  //Stores the time when the last command was 
  * Main output for status while in main sequence. This is called once per loop.
  */
 void displayStatus(String line1, String line2, String line3, String line4) {  
+
   display.clear();
   display.setTextSize(1);
   display.setTextColor(WHITE);
-
   display.setCursor(0,0);
   display.println(line1);
 
@@ -125,6 +131,9 @@ void setup() {
   Serial.begin(9600);
   Serial.println("setup start...");
 
+  // Infrared.
+  infraredSetup();
+  
   // Init motor control pins.
   pinMode(PIN_MOTOR_A_INPUT1, OUTPUT);
   pinMode(PIN_MOTOR_A_INPUT2, OUTPUT);
@@ -150,6 +159,108 @@ void setup() {
   Serial.println("setup end");
 }
 
+void infraredSetup() {
+  
+  //Serial.println("Inside infraredSetup");
+  ir_receiver.enableIRIn();
+  ir_receiver.blink13(true);
+}
+
+char infraredProcess() {
+
+  //Serial.println("Inside infraredProcess");
+  char command = COMMAND_NONE;
+  decode_results ir_results;
+
+  // Did we get a signal?
+  if (ir_receiver.decode(&ir_results)) {
+
+    String debugString = "";
+    bool cache_command = true;
+    
+    switch (ir_results.value) {
+  
+      case 16738455: // 1 key
+        debugString = "1 key";
+        break;
+      case 16750695: // 2 key
+        debugString = "2 key";
+        break;
+      case 16756815: // 3 key
+        debugString = "3 key";
+        break;
+      case 16724175: // 4 key
+        debugString = "4 key";
+        break;
+      case 16718055: // 5 key
+        debugString = "5 key";
+        break;
+      case 16743045: // 6 key
+        debugString = "6 key";
+        break;
+      case 16716015: // 7 key
+        debugString = "7 key";
+        break;
+      case 16726215: // 8 key
+        debugString = "8 key";
+        break;
+      case 16734885: // 9 key
+        debugString = "9 key";
+        break;
+      case 16728765: // asterix key
+        debugString = "asterix key";
+        break;
+      case 16730805: // 0 key
+        debugString = "0 key";
+        break;
+      case 16732845: // pound key
+        debugString = "pound key";
+        break;
+      case 16736925: // up key
+        debugString = "up key";
+        command = 'F';
+        break;
+      case 16720605: // left key
+        debugString = "left key";
+        command = 'L';
+        break;
+      case 16712445: // ok key
+        debugString = "ok key";
+        command = 'S';
+        break;
+      case 16761405: // right key
+        debugString = "right key";
+        command = 'R';
+        break;
+      case 16754775: // down key
+        debugString = "down key";
+        command = 'B';
+        break;
+      case 4294967295: // repeat whatever i had before!  Someone is holding a button down.
+        debugString = "repeat";
+        command = last_ir_command;
+        cache_command = false;
+        break;
+      default: // some command that i don't know about.  WTF!
+        debugString = ir_results.value;
+        cache_command = false;
+        break;
+    }
+  
+    // Debug info.  If things get wonky, uncomment this code to figure out what is going on.
+    // Serial.println(debugString);
+    
+    // cache the last command, so we know what to do if we get a repeat.
+    if (cache_command) {
+      last_ir_command = command;
+    }
+
+     // put the IR receiver back in receiving mode.
+    ir_receiver.resume();
+  }
+
+  return command;
+}
 
 /**
  * Main Loop: called over and over again as the robot runs, 
@@ -162,18 +273,27 @@ void loop() {
     return;
   }
   
-  // Process the bluetooth command queue, which is all the commands from our remote control.
-  bluetoothProcess();
+  // Query for any inputs.  First try is IR, then BT.
+  char command_received = infraredProcess();
+  if (command_received == COMMAND_NONE) {
+    command_received = bluetoothProcess();
+  }
+
+  // Process any input we might have received.
+  if (command_received != COMMAND_NONE) {
+    //Serial.println(command_received);
+    commandProcess(command_received);
+  } 
   
   // Update the LED screen with our current state.
-  bool connected = (bluetoothState == BLUETOOTH_CONNECTED);
-  int upSecs = (millis() - startTime) / 1000;
-  displayStatus(
-    connected ? F("CONNECTED") : F("DISCONNECTED"),
-    "runtime: " + String(upSecs), 
-    "cmd: " + String(command) + "/" + String(prevCommand) + "   v: " + String(velocity),
-    "objective: " + String("KILL"));
-  
+//  bool connected = (bluetoothState == BLUETOOTH_CONNECTED);
+//  int upSecs = (millis() - startTime) / 1000; 
+//  displayStatus(
+//    connected ? F("CONNECTED") : F("DISCONNECTED"),
+//    "runtime: " + String(upSecs), 
+//    "cmd: " + String(command) + "/" + String(prevCommand) + "   v: " + String(velocity),
+//    "objective: " + String("KILL"));  
+//  
   // Engage auto-shutoff if it has been enabled.
   if (autoShutOff && (millis() > (startTime + AUTO_SHUTOFF_TIME))) {
     dead = true;
@@ -273,19 +393,12 @@ void motorStop() {
   analogWrite(PIN_MOTOR_B_ENABLE, 0); 
 }
 
-
-/**** BLUETOOTH ****/
-
-/**
- * 
- */
-void bluetoothProcess() {
-
+char bluetoothProcess() {
+  
   // If no commands, then nothing to do.
   if (bluetooth.available() <= 0) {
-    return;
+    return COMMAND_NONE;
   }
-
   // A little state management. Since we have data ready to read, that means we are connected.
   bluetoothState = BLUETOOTH_CONNECTED;
 
@@ -295,9 +408,16 @@ void bluetoothProcess() {
   // Read the actual command from the bluetooth buffer.
   prevCommand = command;
   command = bluetooth.read();
+  
   if (command != 'S') {
     Serial.println("cmd2new: " + String(command) + "/" + String(prevCommand));
   }
+
+  return command;
+}
+
+
+void commandProcess(char command) {
   
   // Process the known commands. Note that we change pin mode only if new command is different from previous.  
   if (command != prevCommand) {
@@ -365,4 +485,4 @@ void bluetoothProcess() {
       }
     }
   }
-}
+ }

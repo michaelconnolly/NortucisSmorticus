@@ -50,8 +50,8 @@ char prevCommand = 'A';
 unsigned long timeLastCommand = 0;  //Stores the time when the last command was received from the phone
 
 // Global Variables: Infrared
-//IRrecv ir_receiver(PIN_IR_RECEIVER);
-//char last_ir_command = COMMAND_NONE;
+IRrecv ir_receiver(PIN_IR_RECEIVER);
+char last_ir_command = COMMAND_NONE;
 
 /*** DISPLAY ***/
 
@@ -68,7 +68,7 @@ void displayStatus(String line1, String line2, String line3, String line4) {
 //  }
 
  Serial.println(line1);
- display.display();
+ //display.display();
   Serial.println("draw screen - b1");
   
   display.clear();
@@ -191,104 +191,104 @@ void setup() {
 }
 
 void infraredSetup() {
-//  
-//  //Serial.println("Inside infraredSetup");
-//  ir_receiver.enableIRIn();
-//  ir_receiver.blink13(true);
+  
+  Serial.println("Inside infraredSetup");
+  ir_receiver.enableIRIn();
+  ir_receiver.blink13(true);
 }
 
 char infraredProcess() {
 
-//  //Serial.println("Inside infraredProcess");
+  //Serial.println("Inside infraredProcess");
   char command = COMMAND_NONE;
-//  decode_results ir_results;
-//
-//  // Did we get a signal?
-//  if (ir_receiver.decode(&ir_results)) {
-//
-//    String debugString = "";
-//    bool cache_command = true;
-//    
-//    switch (ir_results.value) {
-//  
-//      case 16738455: // 1 key
-//        debugString = "1 key";
-//        break;
-//      case 16750695: // 2 key
-//        debugString = "2 key";
-//        break;
-//      case 16756815: // 3 key
-//        debugString = "3 key";
-//        break;
-//      case 16724175: // 4 key
-//        debugString = "4 key";
-//        break;
-//      case 16718055: // 5 key
-//        debugString = "5 key";
-//        break;
-//      case 16743045: // 6 key
-//        debugString = "6 key";
-//        break;
-//      case 16716015: // 7 key
-//        debugString = "7 key";
-//        break;
-//      case 16726215: // 8 key
-//        debugString = "8 key";
-//        break;
-//      case 16734885: // 9 key
-//        debugString = "9 key";
-//        break;
-//      case 16728765: // asterix key
-//        debugString = "asterix key";
-//        break;
-//      case 16730805: // 0 key
-//        debugString = "0 key";
-//        break;
-//      case 16732845: // pound key
-//        debugString = "pound key";
-//        break;
-//      case 16736925: // up key
-//        debugString = "up key";
-//        command = 'F';
-//        break;
-//      case 16720605: // left key
-//        debugString = "left key";
-//        command = 'L';
-//        break;
-//      case 16712445: // ok key
-//        debugString = "ok key";
-//        command = 'S';
-//        break;
-//      case 16761405: // right key
-//        debugString = "right key";
-//        command = 'R';
-//        break;
-//      case 16754775: // down key
-//        debugString = "down key";
-//        command = 'B';
-//        break;
-//      case 4294967295: // repeat whatever i had before!  Someone is holding a button down.
-//        debugString = "repeat";
-//        command = last_ir_command;
-//        cache_command = false;
-//        break;
-//      default: // some command that i don't know about.  WTF!
-//        debugString = ir_results.value;
-//        cache_command = false;
-//        break;
-//    }
-//  
-//    // Debug info.  If things get wonky, uncomment this code to figure out what is going on.
-//    // Serial.println(debugString);
-//    
-//    // cache the last command, so we know what to do if we get a repeat.
-//    if (cache_command) {
-//      last_ir_command = command;
-//    }
-//
-//     // put the IR receiver back in receiving mode.
-//    ir_receiver.resume();
-//  }
+  decode_results ir_results;
+
+  // Did we get a signal?
+  if (ir_receiver.decode(&ir_results)) {
+
+    String debugString = "";
+    bool cache_command = true;
+    
+    switch (ir_results.value) {
+  
+      case 16738455: // 1 key
+        debugString = "1 key";
+        break;
+      case 16750695: // 2 key
+        debugString = "2 key";
+        break;
+      case 16756815: // 3 key
+        debugString = "3 key";
+        break;
+      case 16724175: // 4 key
+        debugString = "4 key";
+        break;
+      case 16718055: // 5 key
+        debugString = "5 key";
+        break;
+      case 16743045: // 6 key
+        debugString = "6 key";
+        break;
+      case 16716015: // 7 key
+        debugString = "7 key";
+        break;
+      case 16726215: // 8 key
+        debugString = "8 key";
+        break;
+      case 16734885: // 9 key
+        debugString = "9 key";
+        break;
+      case 16728765: // asterix key
+        debugString = "asterix key";
+        break;
+      case 16730805: // 0 key
+        debugString = "0 key";
+        break;
+      case 16732845: // pound key
+        debugString = "pound key";
+        break;
+      case 16736925: // up key
+        debugString = "up key";
+        command = 'F';
+        break;
+      case 16720605: // left key
+        debugString = "left key";
+        command = 'L';
+        break;
+      case 16712445: // ok key
+        debugString = "ok key";
+        command = 'S';
+        break;
+      case 16761405: // right key
+        debugString = "right key";
+        command = 'R';
+        break;
+      case 16754775: // down key
+        debugString = "down key";
+        command = 'B';
+        break;
+      case 4294967295: // repeat whatever i had before!  Someone is holding a button down.
+        debugString = "repeat";
+        command = last_ir_command;
+        cache_command = false;
+        break;
+      default: // some command that i don't know about.  WTF!
+        debugString = ir_results.value;
+        cache_command = false;
+        break;
+    }
+  
+    // Debug info.  If things get wonky, uncomment this code to figure out what is going on.
+    // Serial.println(debugString);
+    
+    // cache the last command, so we know what to do if we get a repeat.
+    if (cache_command) {
+      last_ir_command = command;
+    }
+
+     // put the IR receiver back in receiving mode.
+    ir_receiver.resume();
+  }
 
   return command;
 }
@@ -310,7 +310,7 @@ void loop() {
   if (command_received == COMMAND_NONE) {
     command_received = bluetoothProcess();
   }
-  command_received = 'F';
+ // command_received = 'F';
 
   // Process any input we might have received.
   if (command_received != COMMAND_NONE) {
@@ -319,17 +319,17 @@ void loop() {
   }
  
   // Update the LED screen with our current state.
-  Serial.println("about to draw screen");
-  bool connected = (bluetoothState == BLUETOOTH_CONNECTED);
-  int upSecs = (millis() - startTime) / 1000;
-   Serial.println("draw screen - a");
-  displayStatus(
-    connected ? F("CONNECTED") : F("DISCONNECTED"),
-    "runtime: " + String(upSecs), 
-    "cmd: " + String(command) + "/" + String(prevCommand) + "   v: " + String(velocity),
-    "objective: " + String("FOO"));
-   Serial.println("finished drawing screen");
- 
+//  Serial.println("about to draw screen");
+//  bool connected = (bluetoothState == BLUETOOTH_CONNECTED);
+//  int upSecs = (millis() - startTime) / 1000;
+//   Serial.println("draw screen - a");
+//  displayStatus(
+//    connected ? F("CONNECTED") : F("DISCONNECTED"),
+//    "runtime: " + String(upSecs), 
+//    "cmd: " + String(command) + "/" + String(prevCommand) + "   v: " + String(velocity),
+//    "objective: " + String("FOO"));
+//   Serial.println("finished drawing screen");
+// 
 
   // Engage auto-shutoff if it has been enabled.
   if (autoShutOff && (millis() > (startTime + AUTO_SHUTOFF_TIME))) {
