@@ -1,8 +1,13 @@
+//#define SEATTLE_BATTLEBOT_ENABLE_IR
+
 // Import external libraries
 #include <Adafruit_ssd1306syp.h>
-#include <IRremote.h>
 #include "SoftwareSerial.h"
 #include "WString.h"
+
+#ifdef SEATTLE_BATTLEBOT_ENABLE_IR
+#include <IRremote.h>
+#endif
 
 // Constants: I/O Pins
 #define PIN_MOTOR_A_ENABLE 5
@@ -49,8 +54,11 @@ char prevCommand = 'A';
 unsigned long timeLastCommand = 0;  //Stores the time when the last command was received from the phone
 
 // Global Variables: Infrared
+#ifdef SEATTLE_BATTLEBOT_ENABLE_IR
 IRrecv ir_receiver(PIN_IR_RECEIVER);
 char last_ir_command = COMMAND_NONE;
+#endif
+
 
 /*** DISPLAY ***/
 
@@ -160,16 +168,20 @@ void setup() {
 }
 
 void infraredSetup() {
-  
+
+#ifdef SEATTLE_BATTLEBOT_ENABLE_IR
   //Serial.println("Inside infraredSetup");
   ir_receiver.enableIRIn();
   ir_receiver.blink13(true);
+#endif
 }
 
 char infraredProcess() {
 
   //Serial.println("Inside infraredProcess");
   char command = COMMAND_NONE;
+
+#ifdef SEATTLE_BATTLEBOT_ENABLE_IR
   decode_results ir_results;
 
   // Did we get a signal?
@@ -259,6 +271,8 @@ char infraredProcess() {
     ir_receiver.resume();
   }
 
+#endif
+
   return command;
 }
 
@@ -286,14 +300,14 @@ void loop() {
   } 
   
   // Update the LED screen with our current state.
-//  bool connected = (bluetoothState == BLUETOOTH_CONNECTED);
-//  int upSecs = (millis() - startTime) / 1000; 
-//  displayStatus(
-//    connected ? F("CONNECTED") : F("DISCONNECTED"),
-//    "runtime: " + String(upSecs), 
-//    "cmd: " + String(command) + "/" + String(prevCommand) + "   v: " + String(velocity),
-//    "objective: " + String("KILL"));  
-//  
+  bool connected = (bluetoothState == BLUETOOTH_CONNECTED);
+  int upSecs = (millis() - startTime) / 1000; 
+  displayStatus(
+    connected ? F("CONNECTED") : F("DISCONNECTED"),
+    "runtime: " + String(upSecs), 
+    "cmd: " + String(command) + "/" + String(prevCommand) + "   v: " + String(velocity),
+    "objective: " + String("KILL"));  
+  
   // Engage auto-shutoff if it has been enabled.
   if (autoShutOff && (millis() > (startTime + AUTO_SHUTOFF_TIME))) {
     dead = true;
