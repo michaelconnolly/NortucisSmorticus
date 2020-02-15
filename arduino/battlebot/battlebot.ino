@@ -2,7 +2,7 @@
 
 // Import external libraries
 #include <Adafruit_ssd1306syp.h>
-#include "SoftwareSerial.h"
+#include "SoftwareSerial. h"
 #include "WString.h"
 
 #ifdef SEATTLE_BATTLEBOT_ENABLE_IR
@@ -295,7 +295,6 @@ void loop() {
 
   // Process any input we might have received.
   if (command_received != COMMAND_NONE) {
-    //Serial.println(command_received);
     commandProcess(command_received);
   } 
   
@@ -435,7 +434,7 @@ void commandProcess(char command) {
   
   // Process the known commands. Note that we change pin mode only if new command is different from previous.  
   if (command != prevCommand) {
-    Serial.println("cmd2: " + String(command));
+    Serial.println("cmd: " + String(command));
     switch (command){
     case 'F': 
       motorForward();

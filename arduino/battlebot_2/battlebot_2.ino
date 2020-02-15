@@ -298,6 +298,16 @@ char infraredProcess() {
  * Main Loop: called over and over again as the robot runs, 
  */
 void loop() {
+
+ Serial.print("currentTime: ");
+  unsigned long currentTime = millis();
+  //unsigned long duration = (currentTime - startTime) / 1000;
+  unsigned long duration = (currentTime - startTime);
+  Serial.print(currentTime);
+  Serial.print(" , startTime: ");
+  Serial.print(startTime);
+  Serial.print(" , Duration: ");
+  Serial.println(duration);
   
   // If we have marked as dead, be dead and do nothing.
   if (dead) { 
